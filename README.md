@@ -72,32 +72,36 @@ Includes:
 - Docker & modular structure
 
 ---
-Streamlit Web App — Screenshots
 
-###  Prediction Page
-![Prediction UI](assets/ui_prediction_page.png)
+##  Streamlit Web App — Screenshots
 
----
-
-### SHAP Global Interpretability
-![SHAP Page](assets/ui_shap_page.png)
+###  Prediction Page  
+![Prediction Page](diab_app/assets/screenshots/streamlit_prediction.png)
 
 ---
 
-###  About Model Page
-![About Page](assets/ui_about_page.png)
+###  SHAP Global Interpretability  
+![SHAP Page](diab_app/assets/screenshots/streamlit_shap.png)
 
 ---
 
-# FastAPI — Screenshots
-
-### 📄 API Docs (Swagger UI)
-![FastAPI Docs](assets/fastapi_docs_1.png)
+###  About Model Page  
+![About Model](diab_app/assets/screenshots/streamlit_about.png)
 
 ---
 
-###  API Prediction Example
-![FastAPI Execution](assets/fastapi_docs_2.png)
+##  FastAPI — Screenshots
+
+###  API Docs (Swagger UI)  
+![FastAPI Docs](diab_app/assets/screenshots/fastapi_docs.png)
+
+---
+
+###  API Prediction Example  
+![FastAPI Execution](diab_app/assets/screenshots/fastapi_execute.png)
+
+---
+
 
 ---
 #  Folder Structure
