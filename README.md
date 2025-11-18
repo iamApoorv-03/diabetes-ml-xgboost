@@ -75,29 +75,37 @@ Includes:
 
 #  Folder Structure
 
-diab_app/
+diabities-ml/
 │
-├── api/
-│ └── main.py # FastAPI backend
+├── diab_app/
+│   │
+│   ├── api/
+│   │   └── main.py
+│   │
+│   ├── streamlit/
+│   │   └── app.py
+│   │
+│   ├── models/
+│   │   ├── xgb_model.pkl
+│   │   ├── scaler.pkl
+│   │   ├── feature_names.json
+│   │   └── thresholds.json
+│   │
+│   └── assets/
+│       ├── shap_bar.png
+│       ├── shap_beeswarm.png
+│       ├── shap_waterfall_sample10.png
+│       ├── shap_dependence_Glucose.png
+│       ├── shap_dependence_Insulin.png
+│       ├── shap_dependence_Pregnancies.png
+│       ├── shap_dependence_SkinThickness.png
+│       └── shap_dependence_BloodPressure.png
 │
-├── streamlit/
-│ └── app.py # Streamlit user interface
-│
-├── models/
-│ ├── xgb_model.pkl # Trained XGBoost model
-│ ├── scaler.pkl # Standardization scaler
-│ ├── feature_names.json # Feature engineering order
-│ └── thresholds.json # Balanced & high-sensitivity thresholds
-│
-└── assets/
-├── shap_bar.png
-├── shap_beeswarm.png
-├── shap_waterfall_sample10.png
-├── shap_dependence_Glucose.png
-├── shap_dependence_Insulin.png
-├── shap_dependence_Pregnancies.png
-├── shap_dependence_SkinThickness.png
-└── shap_dependence_BloodPressure.png
+└── notebooks/
+    ├── 1_Data_Preprocessing_and_Feature_Engineering.ipynb
+    ├── 2_Modeling_and_Error_Analysis.ipynb
+    ├── 3_SHAP_Explainability.ipynb
+    └── 4_Final_Model_Training_and_Export.ipynb
 
 
 ---
@@ -273,7 +281,7 @@ streamlit run app.py
 
 ---
 
-# 📦Model Export Details
+# Model Export Details
 
 Saved in `/models`:
 
