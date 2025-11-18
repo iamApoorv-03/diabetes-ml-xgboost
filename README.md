@@ -72,7 +72,34 @@ Includes:
 - Docker & modular structure
 
 ---
+Streamlit Web App — Screenshots
 
+###  Prediction Page
+![Prediction UI](assets/ui_prediction_page.png)
+
+---
+
+### SHAP Global Interpretability
+![SHAP Page](assets/ui_shap_page.png)
+
+---
+
+###  About Model Page
+![About Page](assets/ui_about_page.png)
+
+---
+
+# FastAPI — Screenshots
+
+### 📄 API Docs (Swagger UI)
+![FastAPI Docs](assets/fastapi_docs_1.png)
+
+---
+
+###  API Prediction Example
+![FastAPI Execution](assets/fastapi_docs_2.png)
+
+---
 #  Folder Structure
 
 diabities-ml/
