@@ -110,12 +110,17 @@ if menu == " Predict Diabetes":
                 st.error(f"Failed to connect to API: {e}")
                 st.info("Make sure you are running 'uvicorn api.main:app --reload' in the terminal.")
 
+
 # ============================================================
 # PAGE 2 — SHAP Interpretability
 # ============================================================
 elif menu == " SHAP Interpretability":
     st.header("Model Interpretability (SHAP)")
-
+    
+    # --- DEBUGGING LINES (This will show us the path on screen) ---
+    st.info(f" Current Script Location: {CURRENT_DIR}")
+    st.info(f" Looking for Assets in: {ASSETS_DIR}")
+    
     st.write("These visualizations show **why the model makes predictions**.")
 
     for title, img in shap_images.items():
@@ -124,8 +129,9 @@ elif menu == " SHAP Interpretability":
             st.subheader(title)
             st.image(path, use_column_width=True)
         else:
-            st.warning(f"Missing image: {img} (Expected at {path})")
-
+            # Show the FULL path it tried to find
+            st.error(f" Could not find: {img}")
+            st.code(f"Tried path: {path}")
 # ============================================================
 # PAGE 3 — About Model
 # ============================================================
