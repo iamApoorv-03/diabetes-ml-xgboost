@@ -16,9 +16,14 @@ st.set_page_config(page_title="Diabetes Prediction App", page_icon="🩺", layou
 API_URL = "http://127.0.0.1:8000/predict"
 
 # ------------------------------------------------------------
-# Load SHAP images from assets
+# SETUP PATHS (Robust Fix)
 # ------------------------------------------------------------
-ASSETS = "../assets"
+# Get the directory where THIS script is located (diab_app/streamlit)
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Go up one level to 'diab_app', then into 'assets'
+# Path becomes: diab_app/assets
+ASSETS_DIR = os.path.join(CURRENT_DIR, "..", "assets")
 
 shap_images = {
     "Global Importance (Bar Plot)": "shap_bar.png",
@@ -37,75 +42,89 @@ st.title("🩺 Diabetes Prediction Web App")
 st.write("This app uses **XGBoost + SMOTE** with a **Dual Threshold System** (balanced & high-sensitivity).")
 
 # ============================================================
-# Sidebar Navigation
+# Sidebar
 # ============================================================
-menu = st.sidebar.radio("Navigation", ["🔍 Prediction", "📊 SHAP Interpretability", "ℹ About Model"])
+st.sidebar.header("Navigation")
+menu = st.sidebar.radio("Go to:", [" Predict Diabetes", "SHAP Interpretability", "ℹ About Model"])
 
 # ============================================================
 # PAGE 1 — Prediction
 # ============================================================
-if menu == "🔍 Prediction":
-    st.header("Enter Patient Data")
+if menu == " Predict Diabetes":
+    st.header("Patient Data Entry")
 
+    # Layout: 2 Columns
     col1, col2 = st.columns(2)
 
     with col1:
-        Pregnancies = st.number_input("Pregnancies", 0, 20, 2)
-        Glucose = st.number_input("Glucose", 0.0, 300.0, 120.0)
-        BloodPressure = st.number_input("Blood Pressure", 0.0, 200.0, 70.0)
-        SkinThickness = st.number_input("Skin Thickness", 0.0, 100.0, 20.0)
+        pregnancies = st.number_input("Pregnancies", 0, 20, 1)
+        glucose = st.number_input("Glucose (mg/dL)", 0, 300, 100)
+        blood_pressure = st.number_input("Blood Pressure (mm Hg)", 0, 200, 72)
+        skin_thickness = st.number_input("Skin Thickness (mm)", 0, 100, 20)
 
     with col2:
-        Insulin = st.number_input("Insulin", 0.0, 1000.0, 80.0)
-        BMI = st.number_input("BMI", 0.0, 70.0, 30.0)
-        DiabetesPedigreeFunction = st.number_input("Diabetes Pedigree Function", 0.0, 3.0, 0.5)
-        Age = st.number_input("Age", 1, 120, 33)
+        insulin = st.number_input("Insulin (mu U/ml)", 0, 900, 80)
+        bmi = st.number_input("BMI", 0.0, 70.0, 25.0)
+        dpf = st.number_input("Diabetes Pedigree Function", 0.0, 3.0, 0.5)
+        age = st.number_input("Age (years)", 0, 120, 30)
 
-    mode = st.radio("Prediction Mode", ["balanced", "high"], horizontal=True)
+    # Threshold Selection
+    st.subheader("⚙ Configuration")
+    mode = st.radio("Select Sensitivity Mode:", ["balanced", "high"], 
+                    help="'High' mode is stricter, flagging more patients for safety.")
 
-    if st.button("Predict"):
-        with st.spinner("Contacting API…"):
-            payload = {
-                "Pregnancies": Pregnancies,
-                "Glucose": Glucose,
-                "BloodPressure": BloodPressure,
-                "SkinThickness": SkinThickness,
-                "Insulin": Insulin,
-                "BMI": BMI,
-                "DiabetesPedigreeFunction": DiabetesPedigreeFunction,
-                "Age": Age
-            }
+    # Predict Button
+    if st.button("Predict Risk"):
+        payload = {
+            "Pregnancies": pregnancies,
+            "Glucose": glucose,
+            "BloodPressure": blood_pressure,
+            "SkinThickness": skin_thickness,
+            "Insulin": insulin,
+            "BMI": bmi,
+            "DiabetesPedigreeFunction": dpf,
+            "Age": age
+        }
 
+        with st.spinner("Analyzing..."):
             try:
-                response = requests.post(f"{API_URL}?mode={mode}", json=payload)
-                result = response.json()
-
-                st.subheader("📌 Prediction Results")
-
-                prob = result["probability"]
-                pred = result["prediction"]
-
-                st.metric("Probability of Diabetes", f"{prob:.2f}")
-                st.write("**Prediction:**", "🟥 Diabetic" if pred == 1 else "🟩 Not Diabetic")
+                response = requests.post(API_URL, json=payload, params={"mode": mode})
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    prob = result["probability"]
+                    pred = result["prediction"]
+                    
+                    st.divider()
+                    if pred == 1:
+                        st.error(f" **High Risk Detected** (Probability: {prob:.2%})")
+                        st.write("Recommendation: Consult a specialist immediately.")
+                    else:
+                        st.success(f" **Low Risk** (Probability: {prob:.2%})")
+                        st.write("Recommendation: Maintain healthy lifestyle.")
+                else:
+                    st.error("Error from API. Check if FastAPI is running.")
+                    st.write(response.text)
 
             except Exception as e:
                 st.error(f"Failed to connect to API: {e}")
+                st.info("Make sure you are running 'uvicorn api.main:app --reload' in the terminal.")
 
 # ============================================================
 # PAGE 2 — SHAP Interpretability
 # ============================================================
-elif menu == "📊 SHAP Interpretability":
+elif menu == " SHAP Interpretability":
     st.header("Model Interpretability (SHAP)")
 
     st.write("These visualizations show **why the model makes predictions**.")
 
     for title, img in shap_images.items():
-        path = os.path.join(ASSETS, img)
+        path = os.path.join(ASSETS_DIR, img)
         if os.path.exists(path):
             st.subheader(title)
             st.image(path, use_column_width=True)
         else:
-            st.warning(f"Missing image: {img}")
+            st.warning(f"Missing image: {img} (Expected at {path})")
 
 # ============================================================
 # PAGE 3 — About Model
@@ -123,7 +142,7 @@ else:
     - Most balanced confusion matrix
     - Strong SHAP interpretability
 
-    ### ⚡ Dual Threshold System
+    ###  Dual Threshold System
     | Mode | Threshold | Use Case |
     |------|-----------|----------|
     | **Balanced Mode** | ~0.51 | Normal screening |
@@ -131,4 +150,3 @@ else:
 
     This allows deployment in both **general clinics** and **critical care** environments.
     """)
-
