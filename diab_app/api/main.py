@@ -8,21 +8,34 @@ import numpy as np
 import pickle
 import json
 import math
+import os
 
 # ------------------------------------------------------------
-# Load model, scaler, feature list, thresholds
+# 1. SETUP PATHS (Robust Fix)
 # ------------------------------------------------------------
+# Get the directory where THIS script is located (diab_app/api)
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-with open("../models/xgb_model.pkl", "rb") as f:
+# Go up one level to 'diab_app', then into 'model'
+# Path becomes: diab_app/model
+MODEL_DIR = os.path.join(CURRENT_DIR, "..", "model")
+
+def load_file(filename):
+    return os.path.join(MODEL_DIR, filename)
+
+# ------------------------------------------------------------
+# 2. LOAD MODELS
+# ------------------------------------------------------------
+with open(load_file("xgb_model.pkl"), "rb") as f:
     model = pickle.load(f)
 
-with open("../models/scaler.pkl", "rb") as f:
+with open(load_file("scaler.pkl"), "rb") as f:
     scaler = pickle.load(f)
 
-with open("../models/feature_names.json", "r") as f:
+with open(load_file("feature_names.json"), "r") as f:
     feature_names = json.load(f)
 
-with open("../models/thresholds.json", "r") as f:
+with open(load_file("thresholds.json"), "r") as f:
     thresholds = json.load(f)
 
 balanced_threshold = thresholds["balanced_threshold"]
@@ -49,60 +62,55 @@ class PatientData(BaseModel):
 
 
 # ------------------------------------------------------------
-# Feature Engineering (MUST MATCH NOTEBOOK)
+# Feature Engineering Function (MUST MATCH TRAINING!)
 # ------------------------------------------------------------
-def create_features(data):
+def create_features(raw_data: dict):
+    # Extract variables
+    Preg = raw_data["Pregnancies"]
+    Gluc = raw_data["Glucose"]
+    BP = raw_data["BloodPressure"]
+    Skin = raw_data["SkinThickness"]
+    Ins = raw_data["Insulin"]
+    BMI = raw_data["BMI"]
+    DPF = raw_data["DiabetesPedigreeFunction"]
+    Age = raw_data["Age"]
 
-    Preg = data["Pregnancies"]
-    Gluc = data["Glucose"]
-    BP   = data["BloodPressure"]
-    Skin = data["SkinThickness"]
-    Ins  = data["Insulin"]
-    BMI  = data["BMI"]
-    DPF  = data["DiabetesPedigreeFunction"]
-    Age  = data["Age"]
+    # Create a dictionary to hold features
+    row = {
+        "Pregnancies": Preg,
+        "Glucose": Gluc,
+        "BloodPressure": BP,
+        "SkinThickness": Skin,
+        "Insulin": Ins,
+        "BMI": BMI,
+        "DiabetesPedigreeFunction": DPF,
+        "Age": Age
+    }
 
-    # Create dictionary
-    row = {}
-
-    # ---- raw features ----
-    row["Pregnancies"] = Preg
-    row["Glucose"] = Gluc
-    row["BloodPressure"] = BP
-    row["SkinThickness"] = Skin
-    row["Insulin"] = Ins
-    row["BMI"] = BMI
-    row["DiabetesPedigreeFunction"] = DPF
-    row["Age"] = Age
-
-    # ---- Missing flags ----
+    # ---- Missing Flags (0 values) ----
     row["Insulin_missing_flag"] = 1 if Ins == 0 else 0
     row["SkinThickness_missing_flag"] = 1 if Skin == 0 else 0
-
-    # ---- NA flags (as used in model training) ----
     row["Glucose_NA"] = 1 if Gluc == 0 else 0
     row["BloodPressure_NA"] = 1 if BP == 0 else 0
     row["SkinThickness_NA"] = 1 if Skin == 0 else 0
     row["Insulin_NA"] = 1 if Ins == 0 else 0
     row["BMI_NA"] = 1 if BMI == 0 else 0
 
-    # ---- Interaction Features ----
+    # ---- Interactions ----
     row["BMI_Age_Interaction"] = BMI * Age
     row["Glucose_Insulin_Product"] = Gluc * Ins
     row["BMI_per_Age"] = BMI / Age if Age != 0 else 0
 
-    # ---- Log features ----
-    row["Log_BloodPressure"] = math.log(BP) if BP > 0 else 0
-    row["Log_DiabetesPedigreeFunction"] = math.log(DPF) if DPF > 0 else 0
+    # ---- Log Transforms (handle 0s) ----
+    row["Log_BloodPressure"] = np.log1p(BP)
+    row["Log_DiabetesPedigreeFunction"] = np.log1p(DPF)
 
-    # ---- Binary feature ----
+    # ---- Domain Indicators ----
     row["High_Glucose"] = 1 if Gluc > 140 else 0
-
-    # ---- Extra interactions ----
     row["BMI_Glucose"] = BMI * Gluc
     row["Age_Glucose"] = Age * Gluc
 
-    # ---- Medical insulin resistance index ----
+    # ---- HOMA-IR (Proxy) ----
     row["HOMA_IR"] = (Gluc * Ins) / 405
 
     # ---- Sqrt ----
