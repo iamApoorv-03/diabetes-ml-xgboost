@@ -11,21 +11,29 @@ import math
 import os
 
 # ------------------------------------------------------------
-# 1. SETUP PATHS (Robust Fix)
+# 1. SETUP PATHS (The Robust Fix)
 # ------------------------------------------------------------
-# Get the directory where THIS script is located (diab_app/api)
+# Get the directory where THIS script is (diab_app/api)
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Go up one level to 'diab_app', then into 'model'
-# Path becomes: diab_app/model
-MODEL_DIR = os.path.join(CURRENT_DIR, "..", "model")
+# Note: Check if your folder is named 'model' or 'models'
+MODEL_DIR = os.path.join(CURRENT_DIR, "..", "model") 
 
 def load_file(filename):
-    return os.path.join(MODEL_DIR, filename)
+    path = os.path.join(MODEL_DIR, filename)
+    if not os.path.exists(path):
+        # Fallback: Try 'models' (plural) just in case
+        fallback = os.path.join(CURRENT_DIR, "..", "models", filename)
+        if os.path.exists(fallback):
+            return fallback
+        raise FileNotFoundError(f"Could not find {filename} at {path}")
+    return path
 
 # ------------------------------------------------------------
 # 2. LOAD MODELS
 # ------------------------------------------------------------
+print("Loading model files...") # Debug print
 with open(load_file("xgb_model.pkl"), "rb") as f:
     model = pickle.load(f)
 
@@ -40,16 +48,13 @@ with open(load_file("thresholds.json"), "r") as f:
 
 balanced_threshold = thresholds["balanced_threshold"]
 high_threshold = thresholds["high_sensitivity_threshold"]
+print("Files loaded successfully!")
 
 # ------------------------------------------------------------
-# FastAPI App
+# 3. FASTAPI APP
 # ------------------------------------------------------------
 app = FastAPI(title="Diabetes Prediction API")
 
-
-# ------------------------------------------------------------
-# Input Schema (RAW FEATURES ONLY)
-# ------------------------------------------------------------
 class PatientData(BaseModel):
     Pregnancies: float
     Glucose: float
@@ -60,9 +65,8 @@ class PatientData(BaseModel):
     DiabetesPedigreeFunction: float
     Age: float
 
-
 # ------------------------------------------------------------
-# Feature Engineering Function (MUST MATCH TRAINING!)
+# 4. PREPROCESSING (Keep your original logic)
 # ------------------------------------------------------------
 def create_features(raw_data: dict):
     # Extract variables
@@ -120,25 +124,14 @@ def create_features(raw_data: dict):
     # Build final row EXACTLY in the saved feature order
     # -----------------------------------------------------------
     final = [row[f] for f in feature_names]
-
     return np.array(final).reshape(1, -1)
 
-
-# ------------------------------------------------------------
-# Main Prediction Function
-# ------------------------------------------------------------
 def preprocess_and_predict(raw_data, mode="balanced"):
-
     x = create_features(raw_data)
-
     x_scaled = scaler.transform(x)
-
     prob = model.predict_proba(x_scaled)[0][1]
-
     threshold = balanced_threshold if mode == "balanced" else high_threshold
-
     pred = int(prob >= threshold)
-
     return {
         "probability": float(prob),
         "prediction": pred,
@@ -146,21 +139,13 @@ def preprocess_and_predict(raw_data, mode="balanced"):
         "mode": mode
     }
 
-
-# ------------------------------------------------------------
-# API Routes
-# ------------------------------------------------------------
 @app.get("/")
 def home():
     return {"message": "Diabetes Prediction API is running!"}
 
-
 @app.post("/predict")
 def predict(data: PatientData, mode: str = "balanced"):
-
     raw = data.dict()
-
     if mode not in ["balanced", "high"]:
         return {"error": "Mode must be 'balanced' or 'high'."}
-
     return preprocess_and_predict(raw, mode)
