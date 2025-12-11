@@ -1,20 +1,12 @@
-# ============================================================
-# Streamlit Frontend for Diabetes Prediction
-# ============================================================
-
 import streamlit as st
 import requests
 import pandas as pd
 import os
 
-# Set page config
 st.set_page_config(page_title="Diabetes Prediction App", page_icon="🩺", layout="wide")
-
 API_URL = "http://127.0.0.1:8000/predict"
 
-# ------------------------------------------------------------
-# SETUP PATHS
-# ------------------------------------------------------------
+# --- PATH SETUP ---
 CURRENT_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSETS_DIR = os.path.join(CURRENT_SCRIPT_DIR, "..", "assets")
 
@@ -28,21 +20,12 @@ shap_images = {
     "Dependence - Pregnancies": "shap_dependence_Pregnancies.png",
 }
 
-# ============================================================
-# Title
-# ============================================================
 st.title("🩺 Diabetes Prediction Web App")
 st.write("This app uses **XGBoost + SMOTE** with a **Dual Threshold System**.")
 
-# ============================================================
-# Sidebar
-# ============================================================
 st.sidebar.header("Navigation")
 menu = st.sidebar.radio("Go to:", ["🏥 Predict Diabetes", "📊 SHAP Interpretability", "ℹ About Model"])
 
-# ============================================================
-# PAGE 1 — Predict
-# ============================================================
 if menu == "🏥 Predict Diabetes":
     st.header("Patient Data Entry")
     col1, col2 = st.columns(2)
@@ -56,10 +39,8 @@ if menu == "🏥 Predict Diabetes":
         bmi = st.number_input("BMI", 0.0, 70.0, 25.0)
         dpf = st.number_input("Diabetes Pedigree Function", 0.0, 3.0, 0.5)
         age = st.number_input("Age (years)", 0, 120, 30)
-
     st.subheader("⚙ Configuration")
     mode = st.radio("Select Sensitivity Mode:", ["balanced", "high"])
-
     if st.button("Predict Risk"):
         payload = {
             "Pregnancies": pregnancies, "Glucose": glucose, "BloodPressure": blood_pressure,
@@ -83,25 +64,17 @@ if menu == "🏥 Predict Diabetes":
             except Exception as e:
                 st.error(f"Failed to connect to API: {e}")
 
-# ============================================================
-# PAGE 2 — SHAP
-# ============================================================
 elif menu == "📊 SHAP Interpretability":
     st.header("Model Interpretability (SHAP)")
     st.write("These visualizations show **why the model makes predictions**.")
-
     for title, img in shap_images.items():
         path = os.path.join(ASSETS_DIR, img)
         if os.path.exists(path):
             st.subheader(title)
-            # --- FIX IS HERE: use_container_width=True ---
             st.image(path, use_container_width=True)
         else:
             st.warning(f"⚠️ Missing image: {img}")
 
-# ============================================================
-# PAGE 3 — About
-# ============================================================
 else:
     st.header("ℹ About This Model")
     st.write("This system uses **XGBoost + SMOTE** trained on the PIMA Diabetes dataset.")

@@ -75,13 +75,13 @@ Includes:
 ## Streamlit Web App — Screenshots
 
 ### Prediction Page
-![Prediction Page](diab_app/assets/screenshots/prediction_page.png)
+![Prediction Page](diab_app/assets/screenshots/streamlit_prediction.png)
 
 ### SHAP Global Interpretability
-![SHAP Page](diab_app/assets/screenshots/shap_page.png)
+![SHAP Page](diab_app/assets/screenshots/streamlit_shap.png)
 
 ### About Model Page
-![About Model](diab_app/assets/screenshots/about_page.png)
+![About Model](diab_app/assets/screenshots/streamlit_about.png)
 
 ---
 
@@ -91,7 +91,7 @@ Includes:
 ![FastAPI Docs](diab_app/assets/screenshots/fastapi_docs.png)
 
 ### API Prediction Example
-![FastAPI Execution](diab_app/assets/screenshots/fastapi_execution.png)
+![FastAPI Execution](diab_app/assets/screenshots/fastapi_execute.png)
 
 
 ---
